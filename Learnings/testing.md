@@ -1,120 +1,352 @@
-# Testing Strategy for a Booking Service
+This is a very common Lead-level platform question. Interviewers are not checking whether you can recite definitions of unit/integration/E2E tests. They want to see whether you can connect **test type → component → failure mode → cost/benefit**.
 
 A strong answer follows this pattern:
+
 > “I think about testing as layers. Each layer validates different risks. I avoid overusing expensive tests and ensure failure modes are covered at the right level.”
 
-Let's use an Agoda-style Booking Service example.
+Let's use an Agoda-style **Booking Service** example.
 
-## Architecture:
-- Client
-  
-- API Gateway
-  
-- Booking Service
-  
----
+Architecture:
+
+```text
+Client
+   |
+API Gateway
+   |
+Booking Service
+   |
+---------------------------------
 |               |               |
-|--------------|--------------|
-| Redis        | Database     |
-| Kafka        | Notification Service |
+Redis         Database        Kafka
+                                 |
+                         Notification Service
+```
 
-## Map Tests Properly
+Now map tests properly.
 
-### 1. Unit Tests
-**Purpose:**
-- Verify isolated business logic
-- Mock dependencies
-- Fast and cheap
-**Components Tested:**
-- Booking validation logic
-- Pricing calculation
-- Retry logic
-- Utility classes
-**Example:**
+# 1. Unit tests
+
+Purpose:
+
+* Verify isolated business logic
+* Mock dependencies
+* Fast and cheap
+
+Components tested:
+
+* Booking validation logic
+* Pricing calculation
+* Retry logic
+* Utility classes
+
+Example:
+
 ```java
 public BookingStatus createBooking(User u){
+
     if(u.isBlocked())
         throw new ValidationException();
+
     return SUCCESS;
 }
 ```
-**Unit Test:**
+
+Unit test:
+
 ```java
-'test shouldRejectBlockedUser()'
-defaults to cover failure modes:
-x Valid inputs ✓
-x Boundary conditions ✓
-x Business-rule bugs ✓
-x Null handling ✓
-x Retry count logic ✓
-definitions of not covered:
-x DB failures ✗
-x Kafka failures ✗
-x Network problems ✗
-x Serialization issues ✗
-discussion: Unit tests give high confidence at low cost but cannot validate infrastructure interactions.
+@Test
+void shouldRejectBlockedUser()
 ```
 
-### 2. Integration Tests
-**Purpose:** Verify interactions between components.
-**Components Tested:** 
-- Booking Service with Database or Kafka (or both)
-**Usually:** 
-test with real DB/TestContainers, embedded Kafka, mocked external systems.
-**Example:** 
-defaults to verify persistence:
-def test shouldPersistBooking()
-does the following:
-detect API call → repository call → DB row created.
-failure modes covered:
-x Incorrect SQL ✓,
-x Transaction failures ✓,
-x Serialization/deserialization ✓,
-x Connection issues ✓,
-x Schema mismatch ✓,
-x Repository bugs ✓.
-note: Not covering full user flow or browser/mobile behavior.
-e.g., How would you test Kafka publishing?
-good answer: Use integration testing with TestContainers Kafka instance and verify events are published with expected payloads.
+Failure modes covered:
 
-### 3. System Tests
-**Purpose:** Verify complete application behavior.
-**Components:** 
-booking service, Redis, Database, Kafka (all internal dependencies active)
-deliverables:
-test creating booking → booking saved → cache updated → event published.
-failure modes covered:
-x Configuration errors ✓,
-x Service interactions ✓,
-x Cache issues ✓,
-x Resource exhaustion ✓,
-x Timeout configuration ✓,
-x Connection pooling problems ✓.
-e.g., Suppose Redis is down; expected behavior: booking still succeeds via fallback to database.
-discussion: System tests verify that internal components work together correctly.
+✓ Invalid inputs
 
-### 4. End-to-End (E2E) Tests
-**Purpose:** Simulate actual user journey.
-**Components:** client, gateway, booking service, DB, Kafka, notification service.
-scenario:
-hotel search → book room → payment success → notification received.
-failure modes covered:
-y User workflow failures ✓,
-y Authentication issues ✓,
-y Deployment issues ✓,
-y API contract mismatches ✓,
-y Missing configurations ✓,
-y Cross-service failures ✓.
-e.g., Test user books hotel; expected outcomes include booking status = CONFIRMED, notification delivered, inventory reduced.
-distribution of failure mode mapping across layers is summarized in a table below:
-| Failure Mode | Unit | Integration | System | E2E |
-|----------------|-------|--------------|--------|-----|
-| Validation logic bug |✓|||
-or SQL query issue ||✓|✓|✓|
-or Kafka serialization ||✓|✓|✓|
-or Redis unavailable ||||✓|
-or Wrong service config ||||✓|
-or Authentication issue ||||✓|
-or Entire booking flow broken ||||✓|
-or Performance bottleneck ||||✓|✓|
-table end.
+✓ Boundary conditions
+
+✓ Business-rule bugs
+
+✓ Null handling
+
+✓ Retry count logic
+
+Not covered:
+
+✗ DB failures
+
+✗ Kafka failures
+
+✗ Network problems
+
+✗ Serialization issues
+
+Interview statement:
+
+> Unit tests give high confidence at low cost but cannot validate infrastructure interactions.
+
+---
+
+# 2. Integration tests
+
+Purpose:
+
+Verify interactions between components.
+
+Components tested:
+
+```text
+Booking Service
+      |
+Database
+```
+
+or
+
+```text
+Booking Service
+      |
+Kafka
+```
+
+Usually:
+
+* real DB/TestContainers
+* embedded Kafka
+* mocked external systems
+
+Example:
+
+```java
+@Test
+void shouldPersistBooking()
+```
+
+Verify:
+
+```text
+API call
+    ↓
+Repository call
+    ↓
+DB row created
+```
+
+Failure modes covered:
+
+✓ Incorrect SQL
+
+✓ Transaction failures
+
+✓ Serialization/deserialization
+
+✓ Connection issues
+
+✓ Schema mismatch
+
+✓ Repository bugs
+
+Not covered:
+
+✗ Full user flow
+
+✗ Browser/mobile behavior
+
+---
+
+Example Agoda-style question:
+
+**How would you test Kafka publishing?**
+
+Good answer:
+
+> I'd use integration testing with TestContainers Kafka instance and verify that events are published with expected payloads.
+
+---
+
+# 3. System tests
+
+Purpose:
+
+Verify complete application behavior.
+
+Components:
+
+```text
+Booking Service
+    |
+Redis
+Database
+Kafka
+```
+
+All internal dependencies active.
+
+Test:
+
+```text
+Create booking
+    ↓
+Booking saved
+    ↓
+Cache updated
+    ↓
+Event published
+```
+
+Failure modes covered:
+
+✓ Configuration errors
+
+✓ Service interactions
+
+✓ Cache issues
+
+✓ Resource exhaustion
+
+✓ Timeout configuration
+
+✓ Connection pooling problems
+
+Example:
+
+Suppose Redis is down.
+
+Expected behavior:
+
+```text
+Booking still succeeds
+↓
+Fallback to database
+```
+
+Interview statement:
+
+> System tests verify that internal components work together correctly.
+
+---
+
+# 4. End-to-End (E2E) tests
+
+Purpose:
+
+Simulate actual user journey.
+
+Components:
+
+```text
+Client
+ ↓
+Gateway
+ ↓
+Booking Service
+ ↓
+DB
+ ↓
+Kafka
+ ↓
+Notification Service
+```
+
+Scenario:
+
+```text
+User searches hotel
+      ↓
+User books room
+      ↓
+Payment succeeds
+      ↓
+Notification received
+```
+
+Failure modes covered:
+
+✓ User workflow failures
+
+✓ Authentication issues
+
+✓ Deployment issues
+
+✓ API contract mismatches
+
+✓ Missing configurations
+
+✓ Cross-service failures
+
+---
+
+Example:
+
+Test:
+
+```text
+User books hotel
+```
+
+Expected:
+
+```text
+Booking status = CONFIRMED
+
+Notification delivered
+
+Inventory reduced
+```
+
+---
+
+# Failure-mode mapping (important to memorize)
+
+| Failure mode               | Unit | Integration | System | E2E |
+| -------------------------- | ---: | ----------: | -----: | --: |
+| Validation logic bug       |    ✓ |             |        |     |
+| SQL query issue            |      |           ✓ |      ✓ |   ✓ |
+| Kafka serialization        |      |           ✓ |      ✓ |   ✓ |
+| Redis unavailable          |      |             |      ✓ |   ✓ |
+| Wrong service config       |      |             |      ✓ |   ✓ |
+| Authentication issue       |      |             |        |   ✓ |
+| Entire booking flow broken |      |             |        |   ✓ |
+| Performance bottleneck     |      |             |      ✓ |   ✓ |
+
+---
+
+# Cost vs benefit (Lead-level discussion)
+
+Interviewers love this follow-up:
+
+> Why not do everything with E2E tests?
+
+Good answer:
+
+> E2E tests provide broad confidence but are expensive, slow, and brittle. I prefer many unit tests, fewer integration tests, limited system tests, and only critical-path E2E tests.
+
+Typical ratio:
+
+```text
+          E2E
+         /    \
+    System
+    /      \
+Integration
+ /          \
+Unit
+```
+
+Example distribution:
+
+* Unit → 70–80%
+* Integration → 15–20%
+* System → 5–10%
+* E2E → critical flows only
+
+---
+
+If Agoda asks:
+
+**"How would you test a booking platform?"**
+
+You can answer in one concise flow:
+
+> I’d test in layers. Unit tests validate booking logic and pricing rules. Integration tests verify DB and Kafka interactions. System tests ensure Redis, database, and service interactions work together including failure scenarios like cache outages. E2E tests validate the full user journey such as search → booking → payment → notification. I map each layer to specific failure modes and keep the majority of tests at the unit level for speed and maintainability.
+
+That answer sounds like a Java Lead rather than someone reciting textbook definitions.
