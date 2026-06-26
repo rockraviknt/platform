@@ -1,6 +1,10 @@
 
 > “I think about testing as layers. Each layer validates different risks. I avoid overusing expensive tests and ensure failure modes are covered at the right level.”
 
+**"How would you test a booking platform?"**
+
+> I’d test in layers. Unit tests validate booking logic and pricing rules. Integration tests verify DB and Kafka interactions. System tests ensure Redis, database, and service interactions work together including failure scenarios like cache outages. E2E tests validate the full user journey such as search → booking → payment → notification. I map each layer to specific failure modes and keep the majority of tests at the unit level for speed and maintainability.
+
 # 1. Unit tests
 
 Purpose:
@@ -232,6 +236,4 @@ Example distribution:
 
 ---
 
-**"How would you test a booking platform?"**
 
-> I’d test in layers. Unit tests validate booking logic and pricing rules. Integration tests verify DB and Kafka interactions. System tests ensure Redis, database, and service interactions work together including failure scenarios like cache outages. E2E tests validate the full user journey such as search → booking → payment → notification. I map each layer to specific failure modes and keep the majority of tests at the unit level for speed and maintainability.
