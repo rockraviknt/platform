@@ -1,28 +1,5 @@
-This is a very common Lead-level platform question. Interviewers are not checking whether you can recite definitions of unit/integration/E2E tests. They want to see whether you can connect **test type → component → failure mode → cost/benefit**.
-
-A strong answer follows this pattern:
 
 > “I think about testing as layers. Each layer validates different risks. I avoid overusing expensive tests and ensure failure modes are covered at the right level.”
-
-Let's use an Agoda-style **Booking Service** example.
-
-Architecture:
-
-```text
-Client
-   |
-API Gateway
-   |
-Booking Service
-   |
----------------------------------
-|               |               |
-Redis         Database        Kafka
-                                 |
-                         Notification Service
-```
-
-Now map tests properly.
 
 # 1. Unit tests
 
@@ -70,16 +47,6 @@ Failure modes covered:
 
 ✓ Retry count logic
 
-Not covered:
-
-✗ DB failures
-
-✗ Kafka failures
-
-✗ Network problems
-
-✗ Serialization issues
-
 Interview statement:
 
 > Unit tests give high confidence at low cost but cannot validate infrastructure interactions.
@@ -93,23 +60,6 @@ Purpose:
 Verify interactions between components.
 
 Components tested:
-
-```text
-Booking Service
-      |
-Database
-```
-
-or
-
-```text
-Booking Service
-      |
-Kafka
-```
-
-Usually:
-
 * real DB/TestContainers
 * embedded Kafka
 * mocked external systems
@@ -145,19 +95,9 @@ Failure modes covered:
 
 ✓ Repository bugs
 
-Not covered:
-
-✗ Full user flow
-
-✗ Browser/mobile behavior
-
 ---
 
-Example Agoda-style question:
-
 **How would you test Kafka publishing?**
-
-Good answer:
 
 > I'd use integration testing with TestContainers Kafka instance and verify that events are published with expected payloads.
 
@@ -165,21 +105,7 @@ Good answer:
 
 # 3. System tests
 
-Purpose:
-
-Verify complete application behavior.
-
-Components:
-
-```text
-Booking Service
-    |
-Redis
-Database
-Kafka
-```
-
-All internal dependencies active.
+Purpose: > System tests verify that internal components work together correctly.
 
 Test:
 
@@ -205,6 +131,8 @@ Failure modes covered:
 
 ✓ Timeout configuration
 
+✓ Circuit breaker fallback
+
 ✓ Connection pooling problems
 
 Example:
@@ -218,11 +146,6 @@ Booking still succeeds
 ↓
 Fallback to database
 ```
-
-Interview statement:
-
-> System tests verify that internal components work together correctly.
-
 ---
 
 # 4. End-to-End (E2E) tests
@@ -230,23 +153,6 @@ Interview statement:
 Purpose:
 
 Simulate actual user journey.
-
-Components:
-
-```text
-Client
- ↓
-Gateway
- ↓
-Booking Service
- ↓
-DB
- ↓
-Kafka
- ↓
-Notification Service
-```
-
 Scenario:
 
 ```text
@@ -310,27 +216,12 @@ Inventory reduced
 
 ---
 
-# Cost vs benefit (Lead-level discussion)
-
-Interviewers love this follow-up:
-
+# Cost vs benefit
 > Why not do everything with E2E tests?
 
 Good answer:
 
 > E2E tests provide broad confidence but are expensive, slow, and brittle. I prefer many unit tests, fewer integration tests, limited system tests, and only critical-path E2E tests.
-
-Typical ratio:
-
-```text
-          E2E
-         /    \
-    System
-    /      \
-Integration
- /          \
-Unit
-```
 
 Example distribution:
 
@@ -341,12 +232,6 @@ Example distribution:
 
 ---
 
-If Agoda asks:
-
 **"How would you test a booking platform?"**
 
-You can answer in one concise flow:
-
 > I’d test in layers. Unit tests validate booking logic and pricing rules. Integration tests verify DB and Kafka interactions. System tests ensure Redis, database, and service interactions work together including failure scenarios like cache outages. E2E tests validate the full user journey such as search → booking → payment → notification. I map each layer to specific failure modes and keep the majority of tests at the unit level for speed and maintainability.
-
-That answer sounds like a Java Lead rather than someone reciting textbook definitions.
