@@ -2,36 +2,15 @@
 ---
 > Partial responses improve user experience, retries handle transient failures, observability enables diagnosis, and backpressure protects system stability.
 
-What metrics would you monitor?
+# What metrics would you monitor?
 I monitor both technical and business metrics because a service may be healthy technically while business outcomes degrade.
-Infrastructure:
-CPU
-Memory
-Thread pool usage
-Database connection pool utilization
-Request metrics:
-Request count (RPS)
-Success/error rate
-Latency (P50, P95, P99)
-Retry metrics:
-Retry count
-Retry success rate
-Retry failure rate
-Circuit breaker metrics:
-Open count
-Half-open count
-Failure percentage
-Dependency metrics:
-Downstream latency
-Downstream availability
-Business metrics:
-Orders created
-Payments completed
-Booking failures
-For distributed systems:
-Trace ID
-Correlation ID
-End-to-end request duration
+* Infrastructure:CPU, Memory, Thread pool usage, Database connection pool utilization
+* Request metrics: Request count (RPS), Success/error rate, Latency (P50, P95, P99)
+* Retry metrics: Retry count, Retry success rate, Retry failure rate
+* Circuit breaker metrics: Open count, Half-open count, Failure percentage
+* Dependency metrics: Downstream latency, Downstream availability
+* Business metrics: Orders created, Payments completed, Booking failures
+* For distributed systems:Trace ID, Correlation ID, End-to-end request duration
 
 # 1. Handling partial responses
 
