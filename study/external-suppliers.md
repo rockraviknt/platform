@@ -1,4 +1,4 @@
-<img width="1536" height="1024" alt="557ac48a-4462-47cd-b13b-5c263b8fed64" src="https://github.com/user-attachments/assets/c5c6d5a4-44e9-4e03-8883-efa1ef5c9254" />
+<img width="1536" height="1024" alt="99a8266a-22d7-4042-ad31-6ecebefa4eff" src="https://github.com/user-attachments/assets/c79fe180-3f85-4a65-ae26-dcdd2583d8a7" />
 
 
 In a real Booking-like system, suppliers do not simply call:
