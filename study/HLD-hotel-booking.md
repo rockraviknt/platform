@@ -6,6 +6,15 @@ Elasticsearch is usually **not updated directly by user requests** and is usuall
 
 > Indexes make database queries faster, but they still involve disk access and database resources. Redis keeps frequently accessed data in memory, reducing database load and improving latency. The cache is particularly valuable when read traffic is much larger than write traffic. 
 
+# Supplier updates are not necessarily written to both PostgreSQL and MongoDB.
+> PostgreSQL — when strong consistency matters, because inventory needs: transactions, locking, consistency, booking validation
+MongoDB — when schema is flexible, MongoDB is useful if supplier payloads differ significantly, having different schemas.
+> I would not blindly write supplier updates into both PostgreSQL and MongoDB. PostgreSQL would store normalized transactional data such as inventory and booking information where consistency matters. MongoDB would be used for flexible or raw supplier payloads with varying schemas. Updates would flow through Kafka, then be normalized and routed to the appropriate storage systems.
+> Redis serves the latest frequently changing prices, while postgres persistent storage exists for recovery, auditing, and analytics. I would avoid persisting every small price change immediately and instead batch updates or store snapshots periodically to reduce write load.
+> At very large scale, you may even use time-series or distributed analytical stores instead of PostgreSQL.
+
+
+----
 Typical flow:
 
 ```text id="v9s9gd"
