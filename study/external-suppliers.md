@@ -257,3 +257,7 @@ This is also a common interview follow-up:
 Expected answer:
 
 > Because request parameters are user-controlled and can be tampered with. Supplier identity should come from authenticated claims (JWT/session context), and authorization should enforce row-level access automatically.
+
+
+>Read replicas are useful to scale straightforward reads and reduce load on the primary database. However, for supplier queries involving filtering, search, dashboards, or millions of records, replicas alone become insufficient. I would combine replicas with CQRS and specialized read models so transactional workloads remain isolated from analytical or search-heavy workloads.
+
