@@ -4,6 +4,8 @@ Elasticsearch is usually **not updated directly by user requests** and is usuall
 
 > Elasticsearch should be treated as a searchable index rather than the source of truth. I would update source systems first, publish events through Kafka, and use an indexing service to update Elasticsearch asynchronously. For high-frequency pricing and inventory updates, I would avoid constant reindexing and keep volatile data in Redis while Elasticsearch stores relatively stable searchable metadata.
 
+> Indexes make database queries faster, but they still involve disk access and database resources. Redis keeps frequently accessed data in memory, reducing database load and improving latency. The cache is particularly valuable when read traffic is much larger than write traffic. 
+
 Typical flow:
 
 ```text id="v9s9gd"
@@ -329,3 +331,187 @@ Price = -5000
 Reject immediately.
 
 ---
+
+# If Elasticsearch is already optimized for search, why do we still need Redis?
+
+The answer is that **Elasticsearch and Redis solve different problems**.
+
+Think of them like this:
+
+```text id="h0g95d"
+Elasticsearch → "Find me WHICH hotels"
+
+Redis → "Give me CURRENT values quickly"
+```
+
+Example user query:
+
+```text id="vwgz9s"
+Delhi
+Price < ₹7000
+Pool
+Near airport
+Rating > 4
+```
+
+### Step 1: Elasticsearch
+
+Elasticsearch is good at:
+
+* filtering
+* ranking
+* full-text search
+* geo search
+* sorting
+
+Returns:
+
+```text id="f2s8yg"
+Hotel123
+Hotel456
+Hotel789
+...
+```
+
+Maybe:
+
+```text id="xq1t4v"
+Top 100 hotel IDs
+```
+
+---
+
+### Step 2: Redis
+
+Now fetch highly dynamic fields:
+
+```text id="v3dqt5"
+Hotel123
+Price=₹5200
+Inventory=8
+
+Hotel456
+Price=₹4800
+Inventory=2
+```
+
+because these values change frequently.
+
+Flow:
+
+```text id="1egj54"
+User Search
+      ↓
+Elasticsearch
+      ↓
+Get hotel IDs
+      ↓
+Redis
+      ↓
+Get latest prices/inventory
+      ↓
+Merge response
+```
+
+---
+
+Why not keep prices and inventory only in Elasticsearch?
+
+Because inventory and prices change too frequently.
+
+Imagine:
+
+```text id="36k6gz"
+100 suppliers
+1M inventory changes/hour
+```
+
+If every change updates Elasticsearch:
+
+```text id="szyt8f"
+Supplier update
+↓
+Reindex Elasticsearch document
+↓
+Refresh index
+```
+
+Problems:
+
+* heavy indexing load
+* expensive updates
+* index refresh overhead
+* slower search performance
+
+Elasticsearch is optimized more for:
+
+```text id="o7frw2"
+Read many
+Write relatively less
+```
+
+not:
+
+```text id="r9c2pv"
+Millions of tiny updates/sec
+```
+
+Redis handles that much better:
+
+```text id="zpw0f5"
+SET price:H123:2026-07-15 5200
+```
+
+Very lightweight.
+
+---
+
+Another reason:
+
+Suppose inventory changes:
+
+```text id="9vph9d"
+Hotel123 inventory:
+8 → 7 → 6 → 5
+```
+
+Redis update:
+
+```text id="wgnb96"
+SET inventory:H123 5
+```
+
+Very cheap.
+
+ES update:
+
+```text id="r4jyxk"
+Update hotel document
+Re-index internal structures
+Refresh shard
+```
+
+More expensive.
+
+---
+
+So at Booking scale:
+
+```text id="0k0kj7"
+Elasticsearch:
+- hotel metadata
+- amenities
+- location
+- ratings
+- searchable attributes
+
+Redis:
+- latest price
+- inventory
+- temporary reservation state
+
+PostgreSQL:
+- source of truth
+```
+
+
